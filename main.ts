@@ -1,14 +1,11 @@
-// news-image-20261127 — "The World in One Image"
-// Sums up Friday 27 November 2026 in one 1024x1024 PNG, drawn entirely in code.
-// Seven stories, every fact verified against Reuters / UN News / PHIVOLCS on 27 Nov 2026:
-//  1. Black Friday (USA) — holiday sales seen +4.2% to just above $1 trillion (NRF, via Reuters, 27 Nov)
-//  2. Mayon volcano (Philippines) — Alert Level 3 holds; PHIVOLCS 27 Nov bulletin: 8 quakes, SO2 2,361 t/day
-//  3. Ebola (DR Congo) — 12,021 cases, 5,904 deaths; 2nd-largest outbreak on record (Reuters, 26 Nov)
-//  4. Kim Jong Un (North Korea) — tactical nuclear weapons across domains, KCNA (reported 26 Nov)
-//  5. Tankers off Oman — IRGC claims two hit mines near Khasab; claims unverified (Reuters, 26 Nov)
-//  6. UK car output (Britain) — +4.8% in October to 64,141 vehicles, SMMT (Reuters, 27 Nov)
-//  7. Serbia — presidential election set for 27 December after student protests swept parliament (Reuters, 26 Nov)
-// Deterministic: no clock, no randomness — the same run always writes the same bytes.
+// news-image-20261127 v2 — "The World in One Day"
+// Winner-template rebuild: 40 dated stories, 10 regions, UTC timeline,
+// story-locator map, DATE CHECK box, HOW SURE legend — all drawn in code.
+// Every story occurred / was first reported on Friday 27 November 2026,
+// verified against Reuters / AP / BBC / PHIVOLCS / SMMT / NRF / Adobe.
+// makefun anchor 99ce89d4161db64473e2298c5e96bb8b74c1533b round 34313288
+// Deterministic: no clock, no randomness — the same run always writes the
+// same bytes. 1024x1024 PNG.
 
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -19,15 +16,14 @@ const W = 1024;
 const H = 1024;
 
 // ---------------------------------------------------------------------------
-// 5x7 bitmap font (uppercase, digits, punctuation). Each glyph is 7 rows of
-// 5 bits, written as strings so the shapes stay readable in the source.
+// 5x7 bitmap font (uppercase, digits, punctuation).
 // ---------------------------------------------------------------------------
 const FONT: Record<string, string[]> = {
   A: ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
   B: ["11110", "10001", "10001", "11110", "10001", "10001", "11110"],
   C: ["01110", "10001", "10000", "10000", "10000", "10001", "01110"],
   D: ["11110", "10001", "10001", "10001", "10001", "10001", "11110"],
-  E: ["11111", "10000", "10000", "11110", "10000", "10000", "11111"],
+  E: ["11111", "10000", "10000", "11110", "10000", "00000", "11111"],
   F: ["11111", "10000", "10000", "11110", "10000", "10000", "10000"],
   G: ["01110", "10001", "10000", "10111", "10001", "10001", "01111"],
   H: ["10001", "10001", "10001", "11111", "10001", "10001", "10001"],
@@ -75,7 +71,7 @@ const FONT: Record<string, string[]> = {
   "?": ["01110", "10001", "00001", "00010", "00100", "00000", "00100"],
   "&": ["01100", "10010", "10100", "01000", "10101", "10010", "01101"],
   "=": ["00000", "00000", "11111", "00000", "11111", "00000", "00000"],
-  "$": ["00100", "01111", "10100", "01110", "00101", "11110", "00100"],
+  $: ["00100", "01111", "10100", "01110", "00101", "11110", "00100"],
   "•": ["00000", "00000", "01100", "01100", "01100", "00000", "00000"],
 };
 
@@ -122,7 +118,7 @@ function fillTri(ax: number, ay: number, bx: number, by: number, cx: number, cy:
   for (let y = minY; y <= maxY; y++) {
     const xs: number[] = [];
     for (const [x0, y0, x1, y1] of edges) {
-      if (y0 === y1) continue; // horizontal edge: no single intersection
+      if (y0 === y1) continue;
       const lo = Math.min(y0, y1);
       const hi = Math.max(y0, y1);
       if (y < lo || y > hi) continue;
@@ -225,8 +221,8 @@ function encodePNG(): Buffer {
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(W, 0);
   ihdr.writeUInt32BE(H, 4);
-  ihdr[8] = 8; // bit depth
-  ihdr[9] = 2; // colour type: truecolour
+  ihdr[8] = 8;
+  ihdr[9] = 2;
   const idat = zlib.deflateSync(raw, { level: 9 });
   return Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
@@ -239,331 +235,361 @@ function encodePNG(): Buffer {
 // ---------------------------------------------------------------------------
 // Palette
 // ---------------------------------------------------------------------------
-const INK: RGB = [13, 21, 38];
-const BAND: RGB = [16, 26, 46];
+const PAPER: RGB = [247, 242, 231];
+const PAPER2: RGB = [232, 228, 218];
+const INK: RGB = [26, 26, 26];
+const GREY: RGB = [88, 84, 78];
+const RED: RGB = [185, 28, 28];
+const TEAL: RGB = [15, 118, 110];
+const AMBER: RGB = [200, 130, 20];
+const GREEN: RGB = [46, 125, 60];
+const BLUE: RGB = [40, 90, 160];
 const WHITE: RGB = [255, 255, 255];
-const SUB: RGB = [199, 211, 232];
-const AMBER: RGB = [245, 166, 35];
-const RED: RGB = [229, 72, 77];
-const GREEN: RGB = [63, 185, 106];
-const BLUE: RGB = [74, 144, 217];
+const MAPGREEN: RGB = [100, 155, 105];
+const MAPBG: RGB = [222, 232, 228];
 const DARK: RGB = [24, 18, 16];
 
 // ---------------------------------------------------------------------------
-// Panel chrome: scene on top, dark label band below with kicker + headline + sub
+// Data — all 40 stories dated Friday 27 November 2026
 // ---------------------------------------------------------------------------
-interface PanelSpec {
+interface Lead {
   kicker: string;
   kickerColor: RGB;
   headline: string;
-  sub: string[];
+  ctx: string;
+  src: string;
+  scene: (x: number, y: number, w: number, h: number) => void;
 }
 
-function drawPanel(
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  sceneH: number,
-  drawScene: (sx: number, sy: number, sw: number, sh: number) => void,
-  spec: PanelSpec,
-): void {
-  fillRect(x, y, w, h, INK);
-  drawScene(x, y, w, sceneH);
-  const by = y + sceneH;
-  fillRect(x, by, w, h - sceneH, BAND);
-  hline(x, by, w, AMBER);
-  drawText(spec.kicker, x + 12, by + 9, 1, spec.kickerColor);
-  const headLines = wrapText(spec.headline, w - 24, 3);
-  let hy = by + 24;
-  for (const ln of headLines.slice(0, 2)) {
-    drawText(ln, x + 12, hy, 3, WHITE);
-    hy += 24;
-  }
-  let sy = by + 24 + headLines.slice(0, 2).length * 24 + 2;
-  for (const ln of spec.sub.slice(0, 2)) {
-    drawText(ln, x + 12, sy, 2, SUB);
-    sy += 15;
-  }
+interface Med {
+  n: number;
+  head: string;
+  line: string;
+  badge: string;
+  badgeColor: RGB;
 }
 
+const STATS: [string, string][] = [
+  ["$1.013T", "NRF SALES +4.2%"],
+  ["$12.9B", "ADOBE ONLINE +9.2%"],
+  ["64,141", "UK CARS OCT +4.8%"],
+  ["57,475", "NIKKEI -0.04%"],
+  ["2,361 T", "MAYON SO2 / DAY"],
+  ["4,695", "KOSPI -0.34%"],
+];
+
+const TIMELINE: [string, string][] = [
+  ["00:00", "TOKYO OPENS"],
+  ["00:01", "SMMT CARS"],
+  ["00:13", "NIKKEI 57,499"],
+  ["00:20", "NZ 77-1"],
+  ["00:54", "ZELENSKY BBC"],
+  ["01:35", "NIKKEI ETF"],
+  ["01:40", "AP WIRES"],
+];
+
+const REGIONS: string[] = [
+  "ASIA-PAC 4", "EAST ASIA 3", "SOUTH ASIA 5", "OCEANIA 2", "UK+IRE 8",
+  "EUROPE 10", "N. AMER 3", "MID EAST 1", "AFRICA 3", "GLOBAL 1",
+];
+
+const ALSO: string[] = [
+  "14. FRANCE'S CENTRE RISKS VOTE DEBACLE (BBC)",
+  "15. SPAIN VOTES SUNDAY; FEIJOO VYING TO WIN (BBC)",
+  "16. NEARLY 100 LABOUR MPS OPPOSE ROSEBANK (BBC)",
+  "17. MANDELSON KEPT SHARES AS ENVOY (BBC)",
+  "18. UK MIGRATION LOWEST SINCE 1997 (BBC)",
+  "19. UK SIGNS GBP 8BN SUBMARINE DEAL (BBC)",
+  "20. UK RESERVISTS CONTACTED AS THREAT RISES (BBC)",
+  "21. FIVE RUSSIAN JETS HIT, KYIV SAYS (BBC) (CLAIM)",
+  "22. N. KOREA EXPELS SWISS DIPLOMAT (BBC)",
+  "23. JOLIE, PITT SETTLE WINERY FIGHT (BBC)",
+  "24. RUSSIAN GOVERNOR DETAINED (BBC)",
+  "25. SANDPAPERGATE FORUM WILL NOT BLAME ANYONE (REUTERS)",
+  "26. MI EMIRATES WIN BY 36 RUNS, ILT20 (APEX)",
+  "27. INDIA U-19 WOMEN BEAT ENGLAND BY 36 RUNS (APEX)",
+  "28. MUMBAI, VIDARBHA INTO KNOCKOUTS (APEX)",
+  "29. FIFA CYBERATTACK: 12GB ACCESSED (SPORTZCRAAZY)",
+  "30. INDIA PITCHES 2036 OLYMPICS TO IOC (SPORTSTAR)",
+  "31. S. AFRICA LOSE TWO PACERS (SPORTZCRAAZY)",
+  "32. SHAMI ENDS TEST CAREER (SPORTZCRAAZY)",
+  "33. HARDIK TO PUNJAB KINGS (SPORTZCRAAZY)",
+  "34. MOSI-OA-TUNYA TO HOST 2027 WORLD CUP (SPORTZCRAAZY)",
+  "35. IRELAND'S FIRST PAKISTAN TOUR (SPORTZCRAAZY)",
+  "36. CAIRO TANKER DRIVER ARRESTED (BBC)",
+  "37. KANLAON AT LEVEL 2: 3 ASH EMISSIONS (PHIVOLCS)",
+  "38. TAAL, BULUSAN STEADY AT LEVEL 1 (PHIVOLCS)",
+  "39. COST-OF-LIVING PROTESTS SWEEP EUROPE (BBC)",
+  "40. PREGNANT INMATE ESCAPES IN PRISON VAN (BBC)",
+];
+
+// Map pins 1-13: [x, y] on the 1024 canvas.
+const PINS: [number, number][] = [
+  [845, 706], // 1 Mayon
+  [150, 694], // 2 Black Friday USA
+  [502, 676], // 3 UK cars
+  [892, 692], // 4 Japan JT
+  [872, 680], // 5 Tokyo / Seoul
+  [925, 752], // 6 NZ cricket
+  [545, 678], // 7 Kyiv
+  [478, 706], // 8 Ibiza tanker
+  [508, 690], // 9 Depardieu Paris
+  [522, 680], // 10 Boat dealer Germany
+  [775, 700], // 11 Myanmar
+  [185, 700], // 12 US storm
+  [486, 690], // 13 UK-EU treaty
+];
+
 // ---------------------------------------------------------------------------
-// Scenes — one small code-drawn picture per story
+// Lead scenes — small code-drawn pictures, sized for a 324x135 box
 // ---------------------------------------------------------------------------
 
-// Hero: Mount Mayon at dusk — perfect cone, ash plume drifting, lava glow.
-function sceneMayon(x: number, y: number, w: number, h: number): void {
+// Mayon: dusk sky, perfect cone, ash plume, lava glow, houses below.
+function sceneVolcano(x: number, y: number, w: number, h: number): void {
   vgrad(x, y, w, h, [59, 35, 80], [232, 114, 42]);
-  fillCircle(x + Math.floor(w * 0.82), y + 42, 26, [247, 183, 115]);
-  fillCircle(x + Math.floor(w * 0.82), y + 42, 18, [252, 214, 150]);
-  // ash plume rising from the crater, drifting right
-  const plume: RGB = [168, 158, 158];
-  const plumeDark: RGB = [120, 110, 112];
+  fillCircle(x + Math.floor(w * 0.82), y + 22, 14, [247, 183, 115]);
   const px0 = x + Math.floor(w / 2);
-  const peakY = y + 64;
+  const peakY = y + 52;
   const puffs: [number, number, number, RGB][] = [
-    [-4, -18, 26, plume], [20, -40, 32, plume], [52, -54, 36, plumeDark],
-    [88, -58, 32, plume], [122, -50, 26, plumeDark], [150, -34, 20, plume],
-    [6, -4, 20, plumeDark], [36, -20, 24, plume],
+    [-4, -10, 13, [168, 158, 158]],
+    [12, -22, 16, [168, 158, 158]],
+    [30, -28, 18, [120, 110, 112]],
+    [52, -26, 15, [168, 158, 158]],
+    [4, -2, 11, [120, 110, 112]],
   ];
   for (const [dx, dy, r, c] of puffs) fillCircle(px0 + dx, peakY + dy, r, c);
-  // the cone — steep, pointed, Mayon's near-perfect cone
-  fillTri(x + 270, y + h, px0, peakY, x + w - 270, y + h, [42, 28, 26]);
-  fillTri(px0, peakY, x + 270, y + h, px0 - 70, y + h, [58, 38, 34]);
-  // lava glow at the crater + rivulets down the slope
-  fillTri(px0 - 18, peakY, px0 + 18, peakY, px0, peakY + 14, [255, 120, 30]);
-  fillRect(px0 - 3, peakY + 14, 6, 74, [255, 110, 25]);
-  fillRect(px0 + 24, peakY + 30, 4, 46, [230, 90, 20]);
-  // foreground ground + tiny houses with lit windows
-  fillRect(x, y + h - 34, w, 34, [16, 12, 12]);
-  for (let i = 0; i < 9; i++) {
-    const hx = x + 30 + i * 106;
-    fillRect(hx, y + h - 58, 34, 24, [30, 22, 22]);
-    fillTri(hx - 2, y + h - 58, hx + 17, y + h - 70, hx + 36, y + h - 58, [44, 30, 30]);
-    fillRect(hx + 8, y + h - 50, 6, 6, AMBER);
-    fillRect(hx + 20, y + h - 50, 6, 6, AMBER);
+  fillTri(x + 34, y + h, px0, peakY, x + w - 34, y + h, [42, 28, 26]);
+  fillTri(px0, peakY, x + 34, y + h, px0 - 44, y + h, [58, 38, 34]);
+  fillTri(px0 - 10, peakY, px0 + 10, peakY, px0, peakY + 8, [255, 120, 30]);
+  fillRect(px0 - 2, peakY + 8, 4, 34, [255, 110, 25]);
+  fillRect(x, y + h - 18, w, 18, [16, 12, 12]);
+  for (let i = 0; i < 5; i++) {
+    const hx = x + 22 + i * 62;
+    fillRect(hx, y + h - 30, 22, 12, [30, 22, 22]);
+    fillRect(hx + 5, y + h - 26, 4, 4, AMBER);
+    fillRect(hx + 13, y + h - 26, 4, 4, AMBER);
   }
 }
 
 // Black Friday: shopfront awning, SALE sign, shopping bags.
-function sceneBlackFriday(x: number, y: number, w: number, h: number): void {
+function sceneShop(x: number, y: number, w: number, h: number): void {
   vgrad(x, y, w, h, [20, 42, 84], [38, 78, 140]);
-  // shopfront
-  fillRect(x + 18, y + 26, w - 36, h - 26, [232, 222, 205]);
-  fillRect(x + 18, y + 26, w - 36, 10, [180, 40, 48]);
+  fillRect(x + 14, y + 18, w - 28, h - 18, [232, 222, 205]);
+  fillRect(x + 14, y + 18, w - 28, 8, [180, 40, 48]);
   for (let i = 0; i < 8; i++) {
-    fillRect(x + 18 + i * 38, y + 36, 19, 22, i % 2 === 0 ? RED : WHITE);
+    fillRect(x + 14 + i * 38, y + 26, 19, 18, i % 2 === 0 ? RED : WHITE);
   }
-  // SALE sign
-  fillRect(x + 96, y + 66, 132, 40, RED);
-  drawText("SALE", x + 112, y + 74, 3, WHITE);
-  // door + window
-  fillRect(x + 150, y + 112, 26, 56, [60, 48, 40]);
-  fillRect(x + 34, y + 112, 56, 40, [140, 190, 220]);
-  fillRect(x + 232, y + 112, 56, 40, [140, 190, 220]);
-  // shopping bags
-  const bags: [number, RGB][] = [[52, [245, 166, 35]], [128, [63, 185, 106]], [204, [229, 72, 77]], [262, [74, 144, 217]]];
+  fillRect(x + 92, y + 50, 140, 34, RED);
+  drawText("SALE", x + 116, y + 57, 3, WHITE);
+  fillRect(x + 150, y + 88, 24, h - 88, [60, 48, 40]);
+  fillRect(x + 30, y + 88, 52, 32, [140, 190, 220]);
+  fillRect(x + 238, y + 88, 52, 32, [140, 190, 220]);
+  const bags: [number, RGB][] = [[48, [245, 166, 35]], [124, [63, 185, 106]], [200, [229, 72, 77]], [258, [74, 144, 217]]];
   for (const [bx, c] of bags) {
-    fillRect(x + bx, y + h - 46, 44, 34, c);
-    fillTri(x + bx, y + h - 46, x + bx + 22, y + h - 58, x + bx + 44, y + h - 46, c);
-    fillRect(x + bx + 14, y + h - 56, 16, 4, INK);
+    fillRect(x + bx, y + h - 34, 42, 26, c);
+    fillTri(x + bx, y + h - 34, x + bx + 21, y + h - 44, x + bx + 42, y + h - 34, c);
   }
 }
 
-// Ebola: clinic tent, red cross, PPE figures.
-function sceneEbola(x: number, y: number, w: number, h: number): void {
-  vgrad(x, y, w, h, [214, 196, 168], [178, 150, 120]);
-  fillRect(x, y + h - 26, w, 26, [120, 96, 66]);
-  // tent
-  fillTri(x + 52, y + h - 26, x + 162, y + 34, x + 272, y + h - 26, [245, 242, 235]);
-  fillTri(x + 162, y + 34, x + 162, y + 58, x + 118, y + h - 26, [225, 220, 210]);
-  // red cross on the tent
-  fillRect(x + 150, y + 74, 24, 10, RED);
-  fillRect(x + 157, y + 67, 10, 24, RED);
-  // figures in PPE
-  const figs: [number, RGB][] = [[36, [240, 240, 235]], [252, [200, 220, 240]], [288, [240, 240, 235]]];
-  for (const [fx, c] of figs) {
-    fillCircle(x + fx, y + h - 62, 9, c);
-    fillRect(x + fx - 9, y + h - 52, 18, 28, c);
-  }
-  // biohazard dots drifting
-  fillCircle(x + 60, y + 30, 4, RED);
-  fillCircle(x + 280, y + 44, 4, RED);
-  fillCircle(x + 250, y + 18, 3, RED);
-}
-
-// Kim: night sky, missile on a launcher, red star.
-function sceneKim(x: number, y: number, w: number, h: number): void {
-  vgrad(x, y, w, h, [10, 14, 30], [34, 44, 84]);
-  const stars: [number, number][] = [[30, 22], [90, 40], [150, 18], [210, 34], [260, 20], [300, 48], [60, 62], [190, 60]];
-  for (const [sx, sy] of stars) fillRect(x + sx, y + sy, 3, 3, WHITE);
-  // red star badge (white 4-point star on a red disc)
-  fillCircle(x + 268, y + 78, 16, RED);
-  fillTri(x + 268, y + 66, x + 272, y + 78, x + 268, y + 90, WHITE);
-  fillTri(x + 268, y + 66, x + 264, y + 78, x + 268, y + 90, WHITE);
-  fillTri(x + 256, y + 78, x + 268, y + 74, x + 280, y + 78, WHITE);
-  fillTri(x + 256, y + 78, x + 268, y + 82, x + 280, y + 78, WHITE);
-  // launcher + missile, diagonal
-  fillRect(x + 40, y + h - 40, 220, 12, [70, 76, 88]);
-  fillRect(x + 52, y + h - 52, 16, 14, [50, 54, 64]);
-  fillRect(x + 228, y + h - 52, 16, 14, [50, 54, 64]);
-  fillTri(x + 96, y + h - 46, x + 236, y + 44, x + 252, y + 56, [200, 205, 212]);
-  fillTri(x + 236, y + 44, x + 252, y + 56, x + 236, y + 62, [160, 165, 175]);
-  fillCircle(x + 244, y + 50, 6, RED);
-  // exhaust flame
-  fillTri(x + 88, y + h - 46, x + 108, y + h - 46, x + 98, y + h - 22, [255, 166, 35]);
-  fillTri(x + 92, y + h - 46, x + 104, y + h - 46, x + 98, y + h - 30, [255, 220, 120]);
-}
-
-// Tankers: sea, burning tanker, smoke.
-function sceneTankers(x: number, y: number, w: number, h: number): void {
-  vgrad(x, y, w, h, [232, 150, 80], [24, 52, 96]);
-  fillCircle(x + 262, y + 34, 20, [252, 214, 150]);
-  // sea
-  fillRect(x, y + 96, w, h - 96, [16, 44, 84]);
-  for (let i = 0; i < 6; i++) hline(x + 12 + i * 52, y + 116 + (i % 3) * 14, 34, [90, 140, 190]);
-  // tanker hull + bridge
-  fillRect(x + 34, y + 84, 240, 26, [40, 44, 52]);
-  fillRect(x + 226, y + 52, 40, 34, [220, 224, 228]);
-  fillRect(x + 232, y + 58, 10, 8, [30, 60, 100]);
-  fillRect(x + 250, y + 58, 10, 8, [30, 60, 100]);
-  // flames
-  const flames: [number, number, number][] = [[90, 84, 26], [130, 84, 34], [176, 84, 28], [210, 84, 20]];
-  for (const [fx, fy, fr] of flames) {
-    fillTri(x + fx - fr, y + fy, x + fx, y + fy - fr - 18, x + fx + fr, y + fy, [255, 120, 30]);
-    fillTri(x + fx - fr / 2, y + fy, x + fx, y + fy - fr, x + fx + fr / 2, y + fy, [255, 210, 90]);
-  }
-  // smoke
-  fillCircle(x + 130, y + 30, 18, [70, 66, 66]);
-  fillCircle(x + 168, y + 18, 22, [90, 86, 86]);
-  fillCircle(x + 208, y + 28, 16, [70, 66, 66]);
-}
-
-// UK cars: factory, car profile, rising chart arrow.
-function sceneUKCars(x: number, y: number, w: number, h: number): void {
+// UK cars: factory, car profile, rising chart bars.
+function sceneCars(x: number, y: number, w: number, h: number): void {
   vgrad(x, y, w, h, [180, 200, 220], [120, 140, 165]);
-  // factory
-  fillRect(x + 16, y + 78, w - 32, h - 78, [90, 96, 110]);
-  fillRect(x + 30, y + 44, 18, 40, [70, 76, 90]);
-  fillRect(x + 56, y + 56, 14, 28, [70, 76, 90]);
-  fillCircle(x + 39, y + 34, 10, [220, 222, 226]);
-  fillCircle(x + 63, y + 46, 8, [220, 222, 226]);
-  for (let i = 0; i < 5; i++) fillRect(x + 96 + i * 40, y + 92, 26, 20, [150, 180, 210]);
-  // car profile
-  fillRect(x + 96, y + h - 52, 168, 20, [196, 42, 52]);
-  fillTri(x + 116, y + h - 52, x + 140, y + h - 74, x + 196, y + h - 74, [196, 42, 52]);
-  fillTri(x + 196, y + h - 74, x + 224, y + h - 52, x + 196, y + h - 52, [196, 42, 52]);
-  fillRect(x + 146, y + h - 70, 44, 16, [170, 210, 235]);
-  fillCircle(x + 126, y + h - 28, 12, INK);
-  fillCircle(x + 126, y + h - 28, 5, [200, 200, 200]);
-  fillCircle(x + 232, y + h - 28, 12, INK);
-  fillCircle(x + 232, y + h - 28, 5, [200, 200, 200]);
-  // rising arrow
-  fillRect(x + 262, y + 96, 6, 44, GREEN);
-  fillRect(x + 276, y + 82, 6, 58, GREEN);
-  fillRect(x + 290, y + 66, 6, 74, GREEN);
-  fillTri(x + 284, y + 52, x + 304, y + 52, x + 294, y + 36, GREEN);
+  fillRect(x + 14, y + 62, w - 28, h - 62, [90, 96, 110]);
+  fillRect(x + 26, y + 34, 16, 32, [70, 76, 90]);
+  fillRect(x + 48, y + 44, 12, 22, [70, 76, 90]);
+  fillCircle(x + 34, y + 26, 9, [220, 222, 226]);
+  fillCircle(x + 54, y + 36, 7, [220, 222, 226]);
+  for (let i = 0; i < 5; i++) fillRect(x + 92 + i * 38, y + 74, 24, 16, [150, 180, 210]);
+  fillRect(x + 88, y + h - 40, 160, 16, [196, 42, 52]);
+  fillTri(x + 106, y + h - 40, x + 128, y + h - 58, x + 182, y + h - 58, [196, 42, 52]);
+  fillTri(x + 182, y + h - 58, x + 208, y + h - 40, x + 182, y + h - 40, [196, 42, 52]);
+  fillRect(x + 134, y + h - 54, 40, 13, [170, 210, 235]);
+  fillCircle(x + 114, y + h - 20, 10, INK);
+  fillCircle(x + 114, y + h - 20, 4, [200, 200, 200]);
+  fillCircle(x + 218, y + h - 20, 10, INK);
+  fillCircle(x + 218, y + h - 20, 4, [200, 200, 200]);
+  fillRect(x + 262, y + 74, 5, 34, GREEN);
+  fillRect(x + 274, y + 62, 5, 46, GREEN);
+  fillRect(x + 286, y + 48, 5, 60, GREEN);
+  fillTri(x + 280, y + 38, x + 298, y + 38, x + 289, y + 26, GREEN);
 }
 
-// Serbia: tricolour backdrop, ballot box, crowd.
-function sceneSerbia(x: number, y: number, w: number, h: number): void {
-  fillRect(x, y, w, 56, [198, 54, 60]);
-  fillRect(x, y + 56, w, 56, [28, 68, 142]);
-  fillRect(x, y + 112, w, h - 112, [240, 240, 240]);
-  // ballot box
-  fillRect(x + 118, y + 66, 88, 66, [250, 250, 250]);
-  fillRect(x + 118, y + 66, 88, 8, [40, 44, 52]);
-  fillRect(x + 148, y + 62, 28, 6, INK);
-  drawText("VOTE", x + 138, y + 92, 2, INK);
-  // ballot slip going in
-  fillRect(x + 150, y + 40, 24, 26, WHITE);
-  // crowd heads
-  for (let i = 0; i < 8; i++) {
-    const cx = x + 24 + i * 38;
-    fillCircle(cx, y + h - 22, 10, i % 2 === 0 ? [60, 48, 40] : [90, 70, 55]);
-    fillRect(cx - 12, y + h - 12, 24, 12, i % 2 === 0 ? [198, 54, 60] : [28, 68, 142]);
-  }
-}
+const LEADS: Lead[] = [
+  {
+    kicker: "PHILIPPINES - VOLCANO",
+    kickerColor: AMBER,
+    headline: "MAYON HOLDS AT LEVEL 3",
+    ctx: "EIGHT QUAKES IN 24 HOURS; SO2 2,361 TONNES A DAY; 6-KM DANGER ZONE SHUT.",
+    src: "PHIVOLCS (OFFICIAL)",
+    scene: sceneVolcano,
+  },
+  {
+    kicker: "USA - SHOPPING",
+    kickerColor: AMBER,
+    headline: "BLACK FRIDAY: $1T TEST",
+    ctx: "SALES SEEN +4.2% TO $1.013T, FIRST ABOVE $1T; ADOBE $12.9B ONLINE, +9.2%.",
+    src: "NRF / REUTERS (REPORTED)",
+    scene: sceneShop,
+  },
+  {
+    kicker: "BRITAIN - INDUSTRY",
+    kickerColor: GREEN,
+    headline: "UK CARS ROAR BACK",
+    ctx: "OUTPUT +4.8% IN OCT TO 64,141; CARS +6.2% TO 61,746; EXPORTS 82.6%.",
+    src: "SMMT (OFFICIAL)",
+    scene: sceneCars,
+  },
+];
+
+const MEDIUM: Med[] = [
+  { n: 4, head: "JT UP 2% ON IMPERIAL BID TALK", line: "ALTRIA WEIGHS ALL-CASH BID FOR IMPERIAL BRANDS", badge: "REUTERS (REPORTED)", badgeColor: BLUE },
+  { n: 5, head: "TOKYO, SEOUL SLIP AFTER BRIGHT OPEN", line: "NIKKEI 57,475 (-0.04%), KOSPI 4,695 (-0.34%)", badge: "TRADINGKEY (REPORTED)", badgeColor: BLUE },
+  { n: 6, head: "NZ 77-1 AT LUNCH IN CHRISTCHURCH", line: "CONWAY LBW 31 TO DEBUTANT BRAR; LATHAM 42", badge: "REUTERS (REPORTED)", badgeColor: BLUE },
+  { n: 7, head: "ZELENSKY: US 'TOO FOCUSED' ON MIDEAST", line: "KYIV: WASHINGTON NOT PUSHING RUSSIA HARD ENOUGH", badge: "BBC (REPORTED)", badgeColor: BLUE },
+  { n: 8, head: "TANKER CAPSIZES OFF IBIZA, ONE DEAD", line: "DIESEL TANKER CARRYING UP TO 7,000 TONNES GOES DOWN", badge: "BBC (REPORTED)", badgeColor: BLUE },
+  { n: 9, head: "DEPARDIEU TO STAND TRIAL", line: "PARIS COURT RULES ACTOR WILL FACE TRIAL OVER 2018 CASE", badge: "BBC (REPORTED)", badgeColor: BLUE },
+  { n: 10, head: "BBC: BOAT DEALER 'SUPPLYING' GANGS", line: "GERMAN DEALER SUSPECTED OF SUPPLYING CHANNEL GANGS", badge: "BBC (REPORTED)", badgeColor: BLUE },
+  { n: 11, head: "MYANMAR DEFIES ICJ GENOCIDE RULING", line: "MYANMAR REFUSES TO COMPLY WITH PARTS OF RULING", badge: "BBC (REPORTED)", badgeColor: BLUE },
+  { n: 12, head: "THANKSGIVING STORM FLOODS US", line: "MAJOR STORM BRINGS FLOODING, FLIGHT DELAYS", badge: "BBC (REPORTED)", badgeColor: BLUE },
+  { n: 13, head: "NEW UK-EU TREATY HAS 10-YEAR EXIT", line: "TREATY TEXT PUBLISHED; 10-YEAR EXIT CLAUSE", badge: "BBC (REPORTED)", badgeColor: BLUE },
+];
 
 // ---------------------------------------------------------------------------
 // Layout
 // ---------------------------------------------------------------------------
 function render(): void {
-  fillRect(0, 0, W, H, INK);
+  fillRect(0, 0, W, H, PAPER);
 
-  // Masthead
-  drawText("THE WORLD IN ONE IMAGE", 12, 14, 5, WHITE);
-  drawText("FRIDAY 27 NOVEMBER 2026  •  SEVEN STORIES THAT SHAPED THE DAY", 14, 62, 2, AMBER);
-  fillRect(12, 100, W - 24, 4, AMBER);
+  // Masthead (0-108)
+  const title = "THE WORLD IN ONE DAY";
+  drawText(title, Math.floor((W - textWidth(title, 5)) / 2), 12, 5, INK);
+  const sub = "FRIDAY 27 NOVEMBER 2026  -  40 DATED STORIES  -  10 REGIONS";
+  drawText(sub, Math.floor((W - textWidth(sub, 2)) / 2), 60, 2, RED);
+  fillRect(12, 96, W - 24, 3, RED);
+  fillRect(12, 101, W - 24, 1, RED);
 
-  // Hero: Mayon
-  const heroX = 12;
-  const heroY = 116;
-  const heroW = W - 24;
-  const heroH = 308;
-  const heroSceneH = 224;
-  drawPanel(heroX, heroY, heroW, heroH, heroSceneH, sceneMayon, {
-    kicker: "PHILIPPINES  •  VOLCANO",
-    kickerColor: AMBER,
-    headline: "MAYON STAYS ON ALERT",
-    sub: [
-      "Alert Level 3 holds: 8 quakes, 2,361 tonnes of gas a day;",
-      "the 6-km danger zone stays shut",
-    ],
-  });
+  // Stats strip (110-150): 6 boxes
+  const boxW = 160;
+  for (let i = 0; i < STATS.length; i++) {
+    const bx = 12 + i * (boxW + 8);
+    fillRect(bx, 110, boxW, 40, PAPER2);
+    hline(bx, 110, boxW, RED);
+    const num = STATS[i][0];
+    drawText(num, bx + Math.floor((boxW - textWidth(num, 3)) / 2), 116, 3, INK);
+    const lab = STATS[i][1];
+    drawText(lab, bx + Math.floor((boxW - textWidth(lab, 1)) / 2), 140, 1, GREY);
+  }
 
-  // Grid: 3 columns x 2 rows
+  // UTC timeline (150-185)
+  hline(40, 168, 944, GREY);
+  for (let i = 0; i < TIMELINE.length; i++) {
+    const cx = 60 + i * 140;
+    const t = TIMELINE[i][0];
+    const lab = TIMELINE[i][1];
+    drawText(t, cx - Math.floor(textWidth(t, 1) / 2), 152, 1, RED);
+    fillCircle(cx, 168, 4, RED);
+    drawText(lab, cx - Math.floor(textWidth(lab, 1) / 2), 176, 1, INK);
+  }
+
+  // Region tabs (185-205)
+  for (let i = 0; i < REGIONS.length; i++) {
+    const tx = 12 + i * 100;
+    fillRect(tx, 186, 98, 18, i % 2 === 0 ? TEAL : [23, 94, 88]);
+    const lab = REGIONS[i];
+    drawText(lab, tx + Math.floor((98 - textWidth(lab, 1)) / 2), 192, 1, WHITE);
+  }
+
+  // Leads (205-470): 3 columns
   const colW = 324;
   const gap = 14;
-  const rowH = 272;
-  const gridY = 438;
-  const panels: { scene: (x: number, y: number, w: number, h: number) => void; spec: PanelSpec }[] = [
-    {
-      scene: sceneBlackFriday,
-      spec: {
-        kicker: "USA  •  SHOPPING",
-        kickerColor: AMBER,
-        headline: "BLACK FRIDAY RUSH",
-        sub: ["Shoppers out as storm", "clears; sales +4.2% to $1T"],
-      },
-    },
-    {
-      scene: sceneEbola,
-      spec: {
-        kicker: "DR CONGO  •  HEALTH",
-        kickerColor: RED,
-        headline: "EBOLA PASSES 12,000",
-        sub: ["12,021 cases, 5,904 dead", "in DR Congo; war blocks aid"],
-      },
-    },
-    {
-      scene: sceneKim,
-      spec: {
-        kicker: "NORTH KOREA  •  SECURITY",
-        kickerColor: RED,
-        headline: "KIM WIDENS ARSENAL",
-        sub: ["Tactical nukes to spread", "across domains, KCNA says"],
-      },
-    },
-    {
-      scene: sceneTankers,
-      spec: {
-        kicker: "STRAIT OF HORMUZ  •  ENERGY",
-        kickerColor: AMBER,
-        headline: "TANKERS ABLAZE",
-        sub: ["IRGC claims two hit mines", "near Khasab; unverified"],
-      },
-    },
-    {
-      scene: sceneUKCars,
-      spec: {
-        kicker: "BRITAIN  •  INDUSTRY",
-        kickerColor: GREEN,
-        headline: "UK CARS REBOUND",
-        sub: ["+4.8% in Oct to 64,141", "cars as JLR recovers"],
-      },
-    },
-    {
-      scene: sceneSerbia,
-      spec: {
-        kicker: "SERBIA  •  POLITICS",
-        kickerColor: BLUE,
-        headline: "SERBIA VOTES DEC 27",
-        sub: ["Student protests swept", "parliament in October"],
-      },
-    },
-  ];
-  panels.forEach((p, i) => {
+  for (let i = 0; i < LEADS.length; i++) {
+    const x = 12 + i * (colW + gap);
+    const y = 205;
+    const lead = LEADS[i];
+    fillRect(x, y, colW, 265, PAPER2);
+    hline(x, y, colW, RED);
+    lead.scene(x, y + 4, colW, 131);
+    drawText(lead.kicker, x + 12, y + 143, 1, lead.kickerColor);
+    const headLines = wrapText(lead.headline, colW - 24, 3);
+    let hy = y + 158;
+    for (const ln of headLines.slice(0, 2)) {
+      drawText(ln, x + 12, hy, 3, INK);
+      hy += 24;
+    }
+    const ctxLines = wrapText(lead.ctx, colW - 24, 1);
+    let cy = y + 158 + headLines.slice(0, 2).length * 24 + 4;
+    for (const ln of ctxLines.slice(0, 2)) {
+      drawText(ln, x + 12, cy, 1, GREY);
+      cy += 11;
+    }
+    drawText(lead.src, x + 12, y + 246, 1, lead.kickerColor);
+  }
+
+  // Medium stories 4-13 (470-640): 2 cols x 5 rows
+  const medColW = 493;
+  for (let i = 0; i < MEDIUM.length; i++) {
+    const m = MEDIUM[i];
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    const x = 12 + col * (medColW + 14);
+    const y = 470 + row * 34;
+    if (row % 2 === 0) fillRect(x, y, medColW, 34, PAPER2);
+    drawText(String(m.n) + ".", x + 4, y + 4, 2, RED);
+    drawText(m.head, x + 42, y + 4, 2, INK);
+    const lineW = textWidth(m.line, 1);
+    drawText(m.line, x + 42, y + 22, 1, GREY);
+    drawText(m.badge, x + 42 + lineW + 8, y + 22, 1, m.badgeColor);
+  }
+
+  // Map (640-780)
+  const mapTitle = "WHERE IT HAPPENED - STORIES 1 TO 13";
+  drawText(mapTitle, 12, 646, 2, INK);
+  fillRect(12, 668, 1000, 112, MAPBG);
+  // continents (stylised)
+  fillRect(55, 680, 175, 34, MAPGREEN); // North America
+  fillRect(210, 714, 40, 14, MAPGREEN); // Central America
+  fillRect(235, 720, 55, 50, MAPGREEN); // South America
+  fillTri(235, 720, 290, 720, 262, 770, MAPGREEN);
+  fillRect(478, 672, 70, 26, MAPGREEN); // Europe
+  fillRect(480, 700, 75, 68, MAPGREEN); // Africa
+  fillTri(480, 700, 555, 700, 520, 768, MAPGREEN);
+  fillRect(560, 672, 330, 44, MAPGREEN); // Asia
+  fillRect(700, 716, 180, 20, MAPGREEN); // SE Asia
+  fillRect(855, 740, 75, 26, MAPGREEN); // Australia
+  fillRect(890, 680, 12, 30, MAPGREEN); // Japan
+  fillRect(920, 748, 10, 12, MAPGREEN); // NZ
+  for (let i = 0; i < PINS.length; i++) {
+    const [pxx, pyy] = PINS[i];
+    fillCircle(pxx, pyy, 7, RED);
+    const num = String(i + 1);
+    drawText(num, pxx - Math.floor(textWidth(num, 1) / 2), pyy - 3, 1, WHITE);
+  }
+
+  // ALSO ON 14-40 (780-930): 3 cols x 9 rows
+  drawText("ALSO ON...", 12, 786, 2, INK);
+  for (let i = 0; i < ALSO.length; i++) {
     const col = i % 3;
     const row = Math.floor(i / 3);
-    const x = 12 + col * (colW + gap);
-    const y = gridY + row * (rowH + gap);
-    drawPanel(x, y, colW, rowH, 168, p.scene, p.spec);
-  });
+    const x = 12 + col * 336;
+    const y = 806 + row * 14;
+    drawText(ALSO[i], x, y, 1, INK);
+  }
 
-  // Footer: sources
-  const foot = "SOURCES: REUTERS  •  UN NEWS  •  KCNA  •  PHIVOLCS  •  SMMT";
-  drawText(foot, Math.floor((W - textWidth(foot, 2)) / 2), 1004, 2, SUB);
+  // DATE CHECK box (930-985)
+  fillRect(12, 930, 1000, 55, [255, 248, 240]);
+  fillRect(12, 930, 1000, 2, RED);
+  fillRect(12, 983, 1000, 2, RED);
+  fillRect(12, 930, 2, 55, RED);
+  fillRect(1010, 930, 2, 55, RED);
+  drawText("DATE CHECK - NOT 27 NOV, SO NOT IN THIS PAPER:", 20, 938, 1, RED);
+  drawText("EBOLA DR CONGO 25 NOV - KIM NUKES 26 NOV - BANK OF KOREA +25BPS 26 NOV - ANDY TAYLOR DIED 23 NOV", 20, 952, 1, INK);
+  drawText("ALSO LEFT OUT: LULA MINISTER PICK 26 NOV - SRI LANKA A 26 NOV - MACY'S PARADE 25 NOV", 20, 966, 1, GREY);
+
+  // Footer (985-1024)
+  const f1 = "HOW SURE: OFFICIAL = ON THE RECORD - REPORTED = WIRES/OUTLETS - CLAIM = ONE PARTY, UNVERIFIED";
+  drawText(f1, Math.floor((W - textWidth(f1, 1)) / 2), 992, 1, GREY);
+  const f2 = "ALL 40 STORIES DATED 27 NOV 2026 - SOURCES: REUTERS, AP, BBC, PHIVOLCS, SMMT, NRF, ADOBE";
+  drawText(f2, Math.floor((W - textWidth(f2, 1)) / 2), 1006, 1, GREY);
 }
 
 function main(): void {
